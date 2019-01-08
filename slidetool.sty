@@ -1,0 +1,439 @@
+\ProvidesPackage{slidetool}
+\NeedsTeXFormat{LaTeX2e}
+%%
+%% Copyright (c) 2008-2016 Andre Platzer
+%%
+%% This package provides useful tools for beamer slides.
+
+\RequirePackage{tikz}
+\RequirePackage{xparse}
+\RequirePackage{ifthen}
+% for \movie
+\RequirePackage{multimedia}
+
+
+% Suppress movies
+\DeclareOption{draft}{\renewcommand{\movie}[2]{#1}}
+\DeclareOption{final}{}
+
+\newif\if@entertain
+\@entertaintrue
+
+\DeclareOption{noentertain}{\global\@entertainfalse}
+\DeclareOption{entertain}{\global\@entertaintrue}
+
+% Suppress movies
+\DeclareOption{nomovie}{\renewcommand{\movie}[3][\empty]{#2}}
+\DeclareOption{movie}{}
+
+\newcommand<>{\withreferences}[1]{\only#2{#1}}
+\DeclareOption{norefs}{\renewcommand<>{\withreferences}[1]{}}
+\DeclareOption{refs}{}
+
+% fast tikz image processing using externalization
+\DeclareOption{fast}{%
+  \usetikzlibrary{external}
+  \tikzexternalize
+  \tikzsetexternalprefix{cache/}
+}
+\DeclareOption{nofast}{}
+
+\DeclareOption*{\PackageWarning{slidetool}{Unknown option to slidetool `\CurrentOption'}}
+\ProcessOptions\relax
+
+\if@entertain
+  \newcommand<>{\entertain}[1]{\ignorespaces\only#2{#1}\ignorespaces}
+  \newcommand<>{\noentertain}[1]{\ignorespaces}
+\else
+  \newcommand<>{\entertain}[1]{\ignorespaces}
+  \newcommand<>{\noentertain}[1]{\ignorespaces\only#2{#1}\ignorespaces}
+\fi
+
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}[theorem]{Remark}
+\theoremstyle{example}
+\newtheorem{counterexample}[theorem]{Counterexample}
+\providecommand{\email}[1]{\texttt{#1}\\}
+
+% -------------------------------------------------
+% Colors
+% -------------------------------------------------
+\definecolor{semblue}{rgb}{0,0,0.7}
+\definecolor{vgreen}{rgb}{.1,.5,0}
+\definecolor{vdarkgreen}{rgb}{.06,.3,0}
+\definecolor{vred}{rgb}{.7,0,0}
+\definecolor{vblue}{rgb}{.1,.15,.62}
+\definecolor{darkishgray}{rgb}{.35,.35,.35}
+\definecolor{vvblue}{rgb}{.14,.21,.868}%{1.4*vblue}
+%{.12,.18,.744}%{1.2*vblue}
+
+% blueish, print well in grayscale
+\definecolor{lsblue}{HTML}{16303A}
+\definecolor{lslightblue}{HTML}{2E6579}
+\definecolor{lsverylightblue}{HTML}{4699B9}
+\definecolor{lsgreen}{HTML}{5ECEF9}
+\definecolor{lslightgreen}{HTML}{54B9DF}
+
+% red-ish
+\definecolor{lsred}{HTML}{B94D5D}
+\definecolor{lslightred}{HTML}{F16579}
+\definecolor{lsdarkred}{HTML}{3A181D}
+
+% 3D7178
+\definecolor{smigreen}{RGB}{61,113,120}
+% DDDDD
+\definecolor{smiwhite}{RGB}{221,221,221}
+% 191919
+\definecolor{smiblack}{RGB}{25,25,25}
+% 323232
+\definecolor{smidarkgray}{RGB}{50,50,50}
+% 5A5A5A
+\definecolor{smigray}{RGB}{90,90,90}
+% 7F0000
+\definecolor{smired}{RGB}{127,0,0}
+
+% stronger stretch than \hfill, which is already stronger than \hfil
+\newcommand{\hfilll}{\hskip 0pt plus 1filll}
+% stronger stretch than \vfill, which is already stronger than \vfil
+\newcommand{\vfilll}{\vskip 0pt plus 1filll}
+
+\providecommand{\yes}{\textcolor{vgreen}{\checkmark}}
+\providecommand{\no}{\textcolor{vred}{\ensuremath{\times}}}
+\providecommand{\syes}{\textcolor{vgreen}{\ensuremath{\bullet}}}
+\providecommand{\sno}{\textcolor{vred}{\ensuremath{\circ}}}
+\providecommand{\dono}{..}
+
+%% additional action specifications for beamer <yes@+> and <no@4,7>
+\newenvironment{yesenv}{\only{\setbeamercolor{itemize item}{fg=vgreen,bg=vgreen}\setbeamertemplate{itemize item}{\yes}\setbeamercolor{enumerate item}{fg=vgreen,bg=vgreen}\setbeamertemplate{enumerate item}{\yes}\color{vgreen}}}{}
+
+\newenvironment{noenv}{\only{\setbeamercolor{itemize item}{fg=vred,bg=vred}\setbeamertemplate{itemize item}{\no}\setbeamercolor{enumerate item}{fg=vred,bg=vred}\setbeamertemplate{enumerate item}{\no}\color{vred}}}
+{}
+
+\newenvironment{yesnoenv}{\only{\setbeamercolor{itemize item}{fg=gray,bg=gray}\setbeamertemplate{itemize item}{?}\setbeamercolor{enumerate item}{fg=gray,bg=gray}\setbeamertemplate{enumerate item}{?}\color{gray}}}
+{}
+\setbeamercolor{qoverlay title}{fg=white,bg=darkgray}
+\setbeamercolor{qoverlay body}{fg=black,bg=gray!10}
+
+%% additional action specifications for beamer <strike@+-> and <strike@4,7>
+\newenvironment{strikeenv}{\only{\color{gray}}}
+{}
+%% strike out on specified slides strike@
+%% \usetikzlibrary{shapes.misc} % for \cancel
+\newcommand<>{\strike}[1]
+{\ignorespaces\begin{altenv}#2{\color{gray}}{}{}{}%
+%
+#1
+\end{altenv}%
+\ignorespacesafterend%
+}
+%{{\color#2{gray}#1\quad\uncover#2{\no}}}
+%\usepackage{tikz}
+%\usetikzlibrary{shapes}
+\newcommand{\mcancelme}[1]{\tikz[baseline] {\node [strike out,draw=red,anchor=text,inner sep=0pt,text=black] {\ensuremath{#1}};}}
+
+%\tikzorate[options]{text} decorates the text with the given tikz options
+\newcommand{\tikzorate}[2][]{\tikz[baseline] {\node[anchor=base,inner sep=0pt,#1] {#2};}}
+
+%fade out on specified slides by transparency
+\newenvironment<>{fading}
+{\ignorespaces\begin{altenv}#1{\pgfsetfillopacity{0.35}\pgfsetstrokeopacity{0.35}}{\pgfsetfillopacity{1}\pgfsetstrokeopacity{1}}{}{}%
+}%
+{\end{altenv}%
+\ignorespacesafterend%
+}
+
+%% additional action specification <fade@+-> to fade out to transparency
+\newenvironment{fadeenv}{\only{\color{gray}}}
+{}
+%% fade out on specified slides
+\newcommand<>{\fade}[1]{{\color#2{gray}#1}}
+
+%\@ifundefined{tikzfading}{}{
+%\tikzfading[name=fadeall,
+%  left color=transparent!35, right color=transparent!35]
+%}
+
+\providecommand*{\emphasise}[1]{\alert{#1}}
+\providecommand*{\tweak}[1]{#1}
+
+
+%\newcommand<>{\refline}[1]{\withreferences<#2>{\tikz[remember picture,overlay] {\node[above left,xshift=0pt,yshift=8pt] at (current page.south east) {#1};}}}
+\newcommand{\refline}[1]{\withreferences{\tikz[remember picture,overlay] {\node[above left,xshift=0pt,yshift=8pt] at (current page.south east) {#1};}}}
+
+
+\newcommand{\bibref}{\@ifstar\bibrefStar\bibrefNoStar}
+\newcommand*{\bibrefStar}[2]{\textcolor{vblue}{\href{#1}{#2}}}
+\newcommand{\bibrefNoStar}[2]{\textcolor{vblue}{\href{http://dx.doi.org/#1}{#2}}}
+
+\tikzstyle{axes}=[]
+\tikzstyle{models}=[red]
+\tikzstyle{sem}=[blue]
+\tikzstyle{world}=[sem,circle,draw=blue!50,fill=blue!20]
+\tikzstyle{accessibility}=[]
+\tikzstyle{jump}=[sem,->,dotted]%
+\tikzstyle{flow}=[sem,->,solid,decorate,decoration=snake]%
+\tikzstyle{hybrid}=[sem,->,decoration={alternating jump flow,meta-segment length=6mm},decorate]
+\tikzstyle{premise}=[]
+\tikzstyle{conclusion}=[thick]
+\tikzstyle{models premise}=[models,premise,above left=6pt,vgreen]
+\tikzstyle{models conclusion}=[models,conclusion,below left=6pt]
+\tikzstyle{mode switch}=[gray,thin,dotted]
+    \tikzstyle{prover}=[draw,rounded corners,fill=vblue!8]
+    \tikzstyle{nondet}=[dashed,blue]
+    \tikzstyle{hidden}=[draw=none,color=white]
+\tikzstyle{emphbox}=[draw,vred,ultra thick,rounded corners]
+
+  %TODO Could \usetikzlibrary{shapes.callouts}
+  \tikzstyle{noteline}=[red,line width=.3ex,shorten <=6pt]
+%  \tikzstyle{notebox}=[red,draw,ellipse,fill=yellow!50,drop shadow,decorate,decoration={random steps,segment length=3pt,amplitude=1pt}]
+%  \tikzstyle{notebox}=[red,draw,cloud,cloud ignores aspect,cloud puff arc=100,fill=yellow!50,drop shadow]
+%  \tikzstyle{notebox}=[red,draw,starburst,fill=yellow!50,line width=2pt,drop shadow]
+%  \tikzstyle{notebox}=[red,draw,rectangle,rounded corners=10,fill=yellow!50,line width=2pt,drop shadow]
+  \tikzstyle{notebox}=[red,draw,rectangle,rounded corners=5,fill=yellow!50,line width=2pt,drop shadow]
+  \tikzstyle{shoutbox}=[thin,draw,fill=smigreen!10,rectangle callout,align=center]
+
+
+\newcommand{\memnode}[2][right]{\tikz[remember picture,overlay]\node[#1] (#2) {};}
+\newcommand{\memnodebox}[3][right]{\tikz[remember picture,overlay]\node[#1] (#2) {#3};}
+\newcommand<>{\connectnodes}[2]{\tikz[remember picture,overlay]
+\draw[->] (#1) -- (#2);}
+%%\nodeannote{node}{(annotation coordinates)}{annotation text}
+\newcommand<>{\nodeannote}[3]{\only#4{\tikz[remember picture,overlay]
+\draw[noteline] (#1) -- #2 node[notebox] {#3};}}
+%\renewcommand{\memnodebox}[3][]{\tikz[remember picture,baseline=(current bounding box.base)]\node (#2) {#3};}
+
+
+\newenvironment<>{partblock}
+{\begin{actionenv}#1%
+ \begin{centering}%
+    \begin{beamercolorbox}[sep=8pt,center]{part title}%
+      \usebeamerfont{part title}%
+}
+{\par%
+    \end{beamercolorbox}
+  \end{centering}%
+\end{actionenv}%
+}
+\newenvironment<>{roundpartblock}
+{\begin{actionenv}#1%
+ \begin{centering}%
+    \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{part title}%
+      \usebeamerfont{part title}%
+}
+{\par%
+    \end{beamercolorbox}
+  \end{centering}%
+\end{actionenv}%
+}
+
+\setbeamercolor{alert box}{fg=black,bg=orange!30}
+\newcommand<>{\alertbox}[1]{\uncover#2{\begin{beamercolorbox}[center,sep=.25ex,rounded=true,shadow=true]{alert box}{#1}\end{beamercolorbox}}}
+
+\setbeamercolor{alerted zone}{bg=yellow!70}%
+\newcommand<>{\alertzone}[2][wd=0.8\textwidth]
+{\begin{altenv}#3
+  {\mbox\bgroup\begin{beamercolorbox}[#1]{alerted zone}}{\end{beamercolorbox}\egroup}
+  {}{}%
+  #2%
+\end{altenv}%
+}
+
+\setbeamercolor{highlighted block}{use=structure,fg=black,bg=blue!10}
+\setbeamercolor{highlighted title}{use=structure,fg=black,bg=blue!20}
+\newenvironment<>{highlighted}[1][]
+{\begin{actionenv}#2%
+      \Brokenblockheadcolor%
+      {blue!20}{black}%{highlighted title block.bg}{highlighted title block.fg}
+      {\textbf{#1}}\\
+    \begin{beamercolorbox}[sep=2pt,shadow=true,rounded=true]{highlighted block}%
+      \usebeamerfont{highlighted block}\ignorespaces%
+}
+{\par%
+    \end{beamercolorbox}
+\end{actionenv}%
+\ignorespacesafterend}
+
+%\newenvironment<>{highlighted}[1][]
+%{\begin{actionenv}#2%
+%%  \Brokenblockheadcolor{highlighted title block.bg}{highlighted title block.fg}{\textbf{#1}}
+%  \Brokenblockheadcolor{blue!20}{black}{\textbf{#1}}
+%  \Brokenblockheadcolor{blue!10}{black}\bgroup}
+%%  \Brokenblockheadcolor{highlighted block.bg}{highlighted block.fg}}
+%{\egroup\par%
+%\end{actionenv}%
+%}
+
+
+% \Brokenblockheadcolor{framecolor}{textcolor}{content}
+\newcommand{\Brokenblockheadcolor}[3]{%
+\tikz[baseline=-.5ex]{\node[fill=#1,draw=#1,rounded corners] {\textcolor{#2}{#3}};}}
+
+\newcommand{\Brokenblockcolor}[6][]{%
+\tikz[baseline=-.5ex]{\node[fill=#2,draw=#2,rounded corners] {\textcolor{#3}{#5}};} \tikz[baseline=-.5ex]{\node[fill=#4,draw=#4,rounded corners,#1] {#6};}}
+
+\newcommand{\Brokenblockjustcolor}[7][]{%
+\tikz[baseline=-.5ex]{\node[fill=#2,draw=#2,rounded corners] {\textcolor{#3}{#5}};} \tikz[baseline=-.5ex]{\node[fill=#4,draw=#4,rounded corners,#1] {#6};}
+\hfill
+\tikz[baseline=-.5ex]{\node[fill=#2,draw=#2,rounded corners] {\textcolor{#3}{#7}};}}
+
+%\Brokenblock[example]{title}{contents}
+%\Brokenblock[alertblock]{title}{contents}
+%\Brokenblock{title}{contents}
+\newcommand<>{\Brokenblock}[3][]{\uncover#4{\Brokenblocki[#1]{#2}{#3}}}
+\newcommand{\Brokenblocki}[3][]{%
+\ifthenelse{\equal{#1}{example}}{%
+\Brokenblockcolor{block title example.bg}{block title example.fg}{block body example.bg}{#2}{#3}%
+}{%
+\ifthenelse{\equal{#1}{alertblock}}{%
+\Brokenblockcolor{block title alerted.bg}{block title alerted.fg}{block body alerted.bg}{#2}{#3}%
+}{%
+\Brokenblockcolor{block title.bg}{block title.fg}{block body.bg}{#2}{#3}%
+}%
+}
+}
+\newcommand{\Brokenblockjust}[4][]{%
+\Brokenblockjustcolor{block title.bg}{block title.fg}{block body.bg}{#2}{#3}{#4}}
+
+\newcommand{\Brokenblockhead}[2][]{%
+\ifthenelse{\equal{#1}{example}}{%
+\Brokenblockheadcolor{block title example.bg}{block title example.fg}{#2}%
+}{%
+\ifthenelse{\equal{#1}{alertblock}}{%
+\Brokenblockheadcolor{block title alerted.bg}{block title alerted.fg}{#2}%
+}{%
+\Brokenblockheadcolor{block title.bg}{block title.fg}{#2}%
+}%
+}%
+}
+
+\newcommand{\BrokenblockTW}[2]{%
+\Brokenblockcolor[text width=\textwidth]{block title.bg}{block title.fg}{block body.bg}{#1}{#2}%
+}
+
+\newcommand{\Brokenblocky}[1]{\tikz[baseline=-.5ex]\node[fill=block title.bg,draw=block title.bg,rounded corners] {\textcolor{block title.fg}{#1}};}
+
+%\DeclareDocumentCommand{\AltMovie}{O{width=.9\columnwidth} O{autostart} m O{1}}{
+
+\DeclareDocumentCommand{\AltMovie}{O{width=.9\columnwidth} O{} m O{1}}{
+\begin{altenv}<#4>{%
+	\movie[#2]}{}{\movie}{}{\includegraphics[#1]{#3}}{#3.avi}%
+\end{altenv}%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% Application specific: hybrid systems and dynamical systems plotting
+%%
+
+% \dynplotframe[]{n}{resource/2_stopavoid}{text for left block} with showing n agents
+\providecommand*{\dynplotframe}[4][]{%
+\providecommand{\HSaspect}{\HS}%
+\begin{frame}[t]
+  \frametitle{\HS Analysis}
+  \begin{block}{Challenge \uncover<+->{(\strut\HSaspect)}}
+    \begin{overlayarea}{\textwidth}{3cm}%
+      \begin{columns}[T]
+      \begin{column}{.4\textwidth}
+      #4
+      \end{column}
+      \begin{column}{.6\textwidth}
+%        \hfill\tikz{\node[fill=vblue,rounded corners,draw,drop shadow] (a){\movie{\includegraphics[height=3cm]{#2.pdf}}{#2.avi}};}~~%
+        \hfill\tikz{\node[draw,vblue,line width=3pt,fill=white,rounded corners,drop shadow=vblue,inner sep=2pt,shadow scale=1.5] {\movie{\includegraphics[height=3cm]{#3}}{#3.avi}};}~~%
+      \end{column}
+    \end{columns}
+  \end{overlayarea}%
+%
+  \begin{overlayarea}{\textwidth}{3.8cm}%
+  \vspace{.6cm}
+  \begin{tikzpicture}[anchor=north west,inner sep=0pt]
+  \useasboundingbox (0,0) rectangle (\textwidth,-3);
+  \node at (0,0) {\includegraphics[width=.34\textwidth]{#3-accel}};%
+  \only<1>{%
+  \node at (.34\textwidth,0) {\includegraphics[width=.34\textwidth]{#3-vel}};%
+  \node at (.68\textwidth,0) {\includegraphics[width=.34\textwidth]{#3-pos}};%
+  }%
+  \only<2>{%
+  \node at (.34\textwidth,0) {\includegraphics[width=.34\textwidth]{#3-om}};%
+  \node at (.68\textwidth,0) {\includegraphics[width=.34\textwidth]{#3-dir}};%
+  }%
+  \end{tikzpicture}%
+  \end{overlayarea}%
+\end{block}%
+\entertain{\ifthenelse{\equal{#2}{}}{}%
+{\ifthenelse{#2>0}%
+{\tikz[remember picture,overlay] {\node[xshift=-12pt] at (current page.center) {\includegraphics[width=0.90in]{images/WALL-E0.png}};}}{}%
+\ifthenelse{#2>1}%
+{\tikz[remember picture,overlay]{\node[xshift=-12pt,yshift=2pt] at (current page.north east) [below left] {\includegraphics[height=1in]{images/EVE0.png}};}}{}%
+}}%
+\end{frame}
+}%
+
+\providecommand*{\dynplotframeext}[7][]{%
+\providecommand{\HSaspect}{\HS}%
+\begin{frame}[t]
+  \frametitle{#7}
+  \vspace{-.8\baselineskip}
+  \begin{block}{Challenge \uncover<+->{(\HSaspect)}}
+    \begin{overlayarea}{\textwidth}{3cm}%
+      \begin{columns}[T]
+      \begin{column}{.4\textwidth}
+      #4
+      \end{column}
+      \begin{column}{.6\textwidth}
+%        \hfill\tikz{\node[fill=vblue,rounded corners,draw,drop shadow] (a){\movie{\includegraphics[height=3cm]{#2.pdf}}{#2.avi}};}~~%
+        \hfill\tikz{\node[draw,vblue,line width=3pt,fill=white,rounded corners,drop shadow=vblue,inner sep=2pt,shadow scale=1.5] {\AltMovie[height=3cm]{#3}[1]};}~~%
+      \end{column}
+    \end{columns}
+  \end{overlayarea}%
+%
+  \begin{overlayarea}{\textwidth}{3.8cm}%
+  \vspace{.6cm}
+  \begin{tikzpicture}[anchor=north west,inner sep=0pt]
+  \useasboundingbox (0,0) rectangle (\textwidth,-3);
+  \node at (0,0) {\includegraphics[width=.34\textwidth]{#3-accel}};%
+  \only<1>{%
+  \node at (.34\textwidth,0) {\includegraphics[width=.34\textwidth]{#3-vel}};%
+  \node at (.68\textwidth,0) {\includegraphics[width=.34\textwidth]{#3-pos}};%
+  }%
+  \only<2->{%
+  \node at (.34\textwidth,0) {\includegraphics[width=.34\textwidth]{#3-om}};%
+  \node at (.68\textwidth,0) {\includegraphics[width=.34\textwidth]{#3-dir}};%
+  }%
+  \end{tikzpicture}%
+  \end{overlayarea}%
+\end{block}%
+\ifthenelse{\equal{#2}{}}{}%
+{\ifthenelse{#2>0}%
+{\tikz[remember picture,overlay] {\node[xshift=-12pt] at (current page.center) {\includegraphics[width=0.90in]{images/WALL-E0.png}};}}{}%
+\ifthenelse{#2>1}%
+{\tikz[remember picture,overlay]{\node[xshift=-12pt,yshift=2pt] at (current page.north east) [below left] {\includegraphics[height=1in]{images/EVE0.png}};}}{}%
+}%
+\ifthenelse{\equal{#5}{}}{}%
+{\tikz[remember picture,overlay]{\node at (current page.center) {\only<3->{\begin{beamerboxesrounded}[width=0.5\textwidth,upper=qoverlay title,lower=qoverlay body,shadow=true]{\centering \textbf{#5}}#6\end{beamerboxesrounded}}};}}%
+\end{frame}
+}%
+
+\providecommand*{\HSplotframe}[3][]{%
+\dynplotframe[#1]{#2}{#3}{
+    Fixed rule describing state evolution with both
+        \begin{itemize}
+           \item Discrete dynamics\\ (control decisions)
+           \item Continuous dynamics\\(differential equations)
+        \end{itemize}
+}}%
+
+% \colorrows{\color{red}} colors all subsequent rows in foreground color red.
+% http://tex.stackexchange.com/questions/97013/change-font-color-of-multiple-rows-in-a-table
+  \def\zapcolorreset{\let\reset@color\relax\ignorespaces}%
+\def\colorrows#1{\noalign{\aftergroup\zapcolorreset#1}\ignorespaces}%
+
+% Bourbaki dangerous bend sign in tikz http://tex.stackexchange.com/questions/262508/is-there-a-simple-way-to-get-the-bourbaki-dangerous-bend-symbol-without-extra
+\providecommand{\dbend}{\tikz[
+  line cap=but,
+  line join=round,
+  x=.5em,
+  very thick,
+  y=1*(height("Z")-\pgflinewidth)*(1-sin(10)),
+  rotate=-10,
+  rounded corners=1.5pt,
+]\draw (1, 0) -- (0, 0) -- (1, 1) -- (0, 1);}

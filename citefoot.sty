@@ -1,0 +1,14 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{citefoot}[2002/03/25]
+
+\let\ps@citefootspecial\@empty
+\def\ps@citefoot{\ps@citefootspecial
+   \def\@oddfoot{\reset@font\parbox[t]{\textwidth}{\the@citefoot}}%
+   \let\@evenfoot\@oddfoot}
+
+\def\citefoot#1{\gdef\the@citefoot{#1}%
+  \if@specialpage
+    \expandafter\global\expandafter\let\expandafter\ps@citefootspecial
+    \csname ps@\@specialstyle\endcsname
+  \fi
+  \thispagestyle{citefoot}}

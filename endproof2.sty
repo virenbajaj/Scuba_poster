@@ -1,0 +1,197 @@
+\ProvidesPackage{endproof2}
+\NeedsTeXFormat{LaTeX2e}
+
+%% THIS CODE SHOULD SKIP \usepackage{endproof2} entirely
+%%
+%%\let\proofatend\proof
+%%\let\endproofatend\endproof
+%%\newcommand*{\fixstatement}[2][]{}
+%%\newcommand*{\printproofs}{}
+%%\newcommand*{\printproofs}{}
+
+
+%%Adapted from http://tex.stackexchange.com/questions/33229/how-to-place-all-proofs-automatically-in-appendix
+%% Also see http://www.ctan.org/pkg/thrmappendix
+
+%% Usage:
+%% \newtheorem{theorem}{Theorem}
+%% \newtheorem{lemma}[theorem]{Lemma}
+%% \fixstatement{theorem}
+%% \fixstatement{lemma}
+%% \fixstatement{proposition}
+
+% Here starts the example, with two theorem declarations
+%\declaretheorem[style=plain,name=Theorem,qed=$\square$,numberwithin=section]{thm}
+%\declaretheorem[style=plain,name=Lemma,qed=$\square$,numberlike=thm]{lem}
+%\newtheorem{thm}{Theorem}
+%\newtheorem{lem}[thm]{Lemma}
+%\fixstatement{thm}
+%\fixstatement[Demonstration of]{lem}
+
+
+%%\begin{theorem}....\end{theorem}\proofatend....\endproofatend
+%%
+%% \section*{Proofs}
+%% \printproofs
+
+%% NOTE: some fragile commands or TikZ contructions within proofs to be moved may have to be externalized as \includegraphics to avoid compilation problems during \printproofs
+
+
+\RequirePackage{etex,etoolbox}
+\RequirePackage{environ}
+
+
+%\long\def\proofmove#1\endproofmove{\proofatend#1\endproofatend}
+
+\newif\ifkeepproof
+\keepprooffalse
+%% postpone proof \begin{proofatend}...\end{proofatend} until \printproofs
+\DeclareOption{proofatend}{\keepprooffalse
+\PackageWarning{endproof2}{If [proofatend] does not compile, try the less invasive [proofonly] option to endproof2.}
+}
+
+%% keep proof \begin{proofatend}...\end{proofatend} in place
+\DeclareOption{keepproof}{\keepprooftrue
+% Fix compilation or duplicate \qed problems
+%\def\qedhere{\qed}
+\smartqed
+}
+
+\newif\ifnoproof
+\noprooffalse
+%% omit proofs \begin{proofatend}...\end{proofatend} entirely
+\DeclareOption{noproof}{\keepprooftrue\noprooftrue}
+
+\newif\ifproofonly
+\proofonlyfalse
+%% Only touch the proof environment to move them, leaving theorems alone. But the numbering has to be checked manually
+\DeclareOption{proofonly}{\proofonlytrue
+\PackageWarning{endproof2}{Unchanged theorem environments.
+CAREFUL: Check proof numbering manually (unless [envcountsame] is set).}
+}
+
+\newif\ifallproofs
+\allproofsfalse
+%@TODO Does not work yet because of infinite recursion of both environments
+%% Affect \begin{proof} ... \end{proof} in the same way as \begin{proofatend}...\end{proofatend} 
+%\DeclareOption{allproofs}{\allproofstrue}
+
+\DeclareOption*{\PackageWarning{endproof2}{Unknown option `\CurrentOption'}}
+\ProcessOptions\relax
+
+\ifkeepproof
+  \providecommand{\fixstatement}[2][]{}
+  \def\printproofs{}
+  \ifnoproof
+    \let\proof\relax
+    \let\endproof\relax
+    \NewEnviron{proof}{}
+    \NewEnviron{proofatend}{}
+  \else
+    \let\proofatend\proof
+    \let\endproofatend\endproof
+  \fi
+
+
+\else%!\ifkeepproof
+
+
+  \ifdefined\proof
+  \PackageWarning{endproof2}{Redefining proof environment}
+  \let\proof\relax
+  \let\endproof\relax
+  \fi
+
+  \RequirePackage{amsthm}
+  %\RequirePackage{thmtools} % supported but not required
+
+  \ifproofonly
+%    \def\qedhere{} % fix multiple \tag compilation problems
+  \fi
+
+  \ifallproofs
+    \let\proof\proofatend
+    \let\endproof\endproofatend
+    %\renewenvironment{proof}{\begin{proofatend}}{%
+    %    \end{proofatend}\ignorespacesafterend%
+    %}
+  \fi
+
+  \providecommand{\@fourthoffour}[4]{#4}
+
+  % \fixstatement[Lemma]{lemma}
+  % \fixstatement[Korollarbeweis]{corollary}
+  % We define an addition for the theorem-like environments; when
+  % \newtheorem{thm}{Theorem} is declared, the macro \thm expands
+  % to {...}{...}{...}{Theorem} and with \@fourthoffour we access
+  % to it; then we make available \@currentlabel (the theorem number)
+  % also outside the environment.  
+  \ifproofonly
+    \providecommand{\fixstatement}[2][\proofname\space of]{%
+    \AfterEndEnvironment{#2}{\xdef\thetheoremtype{#1}}%
+    }
+  \else%!\ifproofonly
+  \providecommand{\fixstatement}[2][\proofname\space of]{%
+    \ifcsname thmt@original@#2\endcsname
+      % the theorem has been declared with \declaretheorem
+      \AtEndEnvironment{#2}{%
+        \xdef\pat@label{\expandafter\expandafter\expandafter
+          \@fourthoffour\csname thmt@original@#2\endcsname\space\@currentlabel}%
+        \xdef\pat@proofof{\@nameuse{pat@proofof@#2}}%
+      }%
+    \else
+      % the theorem has been declared with \newtheorem
+      \AtEndEnvironment{#2}{%
+        \xdef\pat@label{\expandafter\expandafter\expandafter
+          \@fourthoffour\csname #1\endcsname\space\@currentlabel}%
+        \xdef\pat@proofof{\@nameuse{pat@proofof@#2}}%
+      }%
+    \fi
+    \@namedef{pat@proofof@#2}{#1}%
+  }
+  \fi
+
+  % We allocate a block of 1000 token registers; in this way \prooftoks
+  % is 1000 and we can access the following registers of the block by
+  % \prooftoks+n (0<n<1000); we'll use a dedicated counter for it
+  % that is stepped at every proof
+  \globtoksblk\prooftoks{1000}
+  \newcounter{proofcount}
+
+  % We gather the contents of the proof as argument to \proofatend
+  % and then we store
+  % "\begin{proof}[Proof of <theoremname> <theoremnumber>]#1\end{proof}"
+  % in the next token register of the allocated block
+  \ifproofonly
+  \NewEnviron{proofatend}{%
+    \edef\next{%
+      \noexpand\begin{proof}[\thetheoremtype\space\thetheorem]%
+      \unexpanded\expandafter{\BODY}}%
+    \global\toks\numexpr\prooftoks+\value{proofcount}\relax=\expandafter{\next\end{proof}}
+    \stepcounter{proofcount}}
+  \else%!\ifproofonly
+  \NewEnviron{proofatend}{%
+    \edef\next{%
+      \noexpand\begin{proof}[\pat@proofof\space\pat@label]%
+      \unexpanded\expandafter{\BODY}}%
+    \global\toks\numexpr\prooftoks+\value{proofcount}\relax=\expandafter{\next\end{proof}}
+    \stepcounter{proofcount}}
+  \fi
+
+  % \printproofs simply loops over the used token registers of the
+  % block, freeing their contents
+  \def\printproofs{%
+    \count@=\z@
+    \loop
+      \the\toks\numexpr\prooftoks+\count@\relax
+      \ifnum\count@<\value{proofcount}%
+      \advance\count@\@ne
+    \repeat}
+  \makeatother
+
+  \fixstatement[\proofname\space of Theorem]{theorem}
+  \fixstatement[\proofname\space of Proposition]{proposition}
+  \fixstatement[\proofname\space of Lemma]{lemma}
+  \fixstatement[\proofname\space of Corollary]{corollary}
+
+\fi %\ifkeepproof

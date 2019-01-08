@@ -1,0 +1,464 @@
+\ProvidesPackage{fcps}
+\NeedsTeXFormat{LaTeX2e}
+%%
+%% Copyright (c) 2013-2017 Andre Platzer
+%%
+
+\RequirePackage{stmaryrd} % or \usepackage{wasysym} for \lightning
+\RequirePackage{amsmath}
+\RequirePackage{amsbsy} % for \boldsymbol, part of amsmath
+
+%\usepackage[bbsets,Dfprime,setrelation]{math}
+\PassOptionsToPackage{bbsets}{math}
+\PassOptionsToPackage{Dfprime}{math}
+\PassOptionsToPackage{setrelation}{math}
+\RequirePackage{math}
+
+\RequirePackage{tikz}
+\usetikzlibrary{arrows}
+
+\ifcsname beamer@author\endcsname
+\usetikzlibrary{shadows}
+\fi
+
+%\usepackage[prefixflatinterpret,bracketmodalinterpret,fixformat,silentconst,sidenotecalculus,longseqcontext]{logic}
+%\usepackage[prefixflatinterpret,bracketmodalinterpret,fixformat,silentconst,differentialdL,simplenames]{dL}
+%,seqarrow or ,seqinfers,seqoptional
+\PassOptionsToPackage{sidenotecalculus}{logic}
+\PassOptionsToPackage{longseqcontext}{logic}
+\PassOptionsToPackage{prefixflatinterpret}{logic}
+\PassOptionsToPackage{prefixflatinterpret}{dL}
+%\PassOptionsToPackage{postfixflatinterpret}{logic}
+%\PassOptionsToPackage{postfixflatinterpret}{dL}
+\PassOptionsToPackage{bracketmodalinterpret}{logic}
+\PassOptionsToPackage{bracketmodalinterpret}{dL}
+\PassOptionsToPackage{fixformat}{logic}
+\PassOptionsToPackage{fixformat}{dL}
+\PassOptionsToPackage{silentconst}{logic}
+\PassOptionsToPackage{silentconst}{dL}
+\PassOptionsToPackage{differentialdL}{dL}
+\PassOptionsToPackage{simplenames}{dL}
+
+\DeclareOption{irunistore}{\PassOptionsToPackage{\CurrentOption}{logic}}
+\DeclareOption{iranystore}{\PassOptionsToPackage{\CurrentOption}{logic}}
+
+\def\leftrule{L}%
+\def\rightrule{R}%
+\def\globalrule{g}%
+
+% insist on usubst-style axiomatic version
+% uniform substitution predicational for formulas
+\newcommand{\ausfmlax}{p(\usall)}
+\newcommand{\busfmlax}{q(\usall)}
+% uniform substitution program constant
+\newcommand{\ausprgax}{a}
+\newcommand{\busprgax}{b}
+%% \astrm for differential axioms
+\newcommand{\asdtrmax}{f(\usall)}%
+\newcommand{\bsdtrmax}{g(\usall)}%
+
+% from dL.sty
+% \dbox variant for \index
+\def\dibox#1{[#1]}
+% \ddiamond variant for \index
+\def\didia#1{\protect\langle#1\protect\rangle}
+
+\newif\if@fcpsseqset
+\@fcpsseqsetfalse
+% DEFAULT: use |- inference relation as sequent separator
+\DeclareOption{seqinfers}{\@fcpsseqsettrue
+\PassOptionsToPackage{\CurrentOption}{logic}
+\PassOptionsToPackage{seqinsist}{logic}}
+% use -> arrow as sequent separator
+\DeclareOption{seqarrow}{\@fcpsseqsettrue
+  \PassOptionsToPackage{\CurrentOption}{logic}
+  \PassOptionsToPackage{seqoptional}{logic}
+}
+% use --> arrow as sequent separator
+\DeclareOption{seqlongarrow}{\@fcpsseqsettrue\PassOptionsToPackage{\CurrentOption}{logic}}
+% use => arrow as sequent separator
+\DeclareOption{seqArrow}{\@fcpsseqsettrue\PassOptionsToPackage{\CurrentOption}{logic}}
+% use ==> arrow as sequent separator
+\DeclareOption{seqLongarrow}{\@fcpsseqsettrue\PassOptionsToPackage{\CurrentOption}{logic}}
+
+\if@fcpsseqset
+\else
+\PassOptionsToPackage{\CurrentOption}{logic}
+\PassOptionsToPackage{seqinsist}{logic}
+\fi
+
+\DeclareOption{fixformat}{\PassOptionsToPackage{\CurrentOption}{logic}
+\PassOptionsToPackage{\CurrentOption}{dL}}
+
+%[irlabel] provide inference rule labels
+\DeclareOption{irlabel}{
+  \AtBeginDocument{
+\newsavebox{\Rval}%
+\sbox{\Rval}{$\scriptstyle\mathbb{R}$}
+\irlabel{qear|\usebox{\Rval}}
+\irlabel{RCFp|\usebox{\Rval}}
+\newsavebox{\Lightningval}%
+\sbox{\Lightningval}{$\scriptstyle\textcolor{red}{\lightning}$}
+\irlabel{unsound|\usebox{\Lightningval}}
+\irlabel{clash|clash\usebox{\Lightningval}} %%\irref{US} not applicable since it produces a clash
+     % propositional rule
+     \irlabel{notr|$\lnot$\rightrule}
+     \irlabel{notl|$\lnot$\leftrule}
+     \irlabel{orr|$\lor$\rightrule}
+     \irlabel{orl|$\lor$\leftrule}
+     \irlabel{andr|$\land$\rightrule}
+     \irlabel{andl|$\land$\leftrule}
+     \irlabel{implyr|$\limply$\rightrule}
+     \irlabel{implyl|$\limply$\leftrule}
+     \irlabel{equivr|$\lbisubjunct$\rightrule}
+     \irlabel{equivl|$\lbisubjunct$\leftrule}
+     \irlabel{id|id}
+     \irlabel{cut|cut}
+     % structural rules
+     \irlabel{weakenr|W\rightrule}
+     \irlabel{weakenl|W\leftrule}
+     % axioms
+     \irlabel{diamond|$\didia{\cdot}$}
+     \irlabel{box|$\dibox{\cdot}$}
+     \irlabel{composed|$\didia{{;}}$}
+     \irlabel{composeb|$\dibox{{;}}$}
+     \irlabel{choiced|$\didia{\cup}$}
+     \irlabel{choiceb|$\dibox{\cup}$}
+     \irlabel{iterated|$\didia{*}$}
+     \irlabel{iterateb|$\dibox{*}$}
+     \irlabel{testd|$\didia{?}$}
+     \irlabel{testb|$\dibox{?}$}
+     \irlabel{assignd|$\didia{:=}$}
+     \irlabel{assignb|$\dibox{:=}$}
+     \irlabel{evolved|$\didia{'}$}
+     \irlabel{evolveb|$\dibox{'}$}
+     \irlabel{Dassignb|$\dibox{':=}$}
+     %
+     % SUPPRESSED notation for sequent rule versions of dynamic rules
+     \irlabel{composedl|$\didia{{;}}$}
+     \irlabel{composedr|$\didia{{;}}$}
+     \irlabel{composebl|$\dibox{{;}}$}
+     \irlabel{composebr|$\dibox{{;}}$}
+     \irlabel{choicedl|$\didia{\cup}$}
+     \irlabel{choicedr|$\didia{\cup}$}
+     \irlabel{choicebl|$\dibox{\cup}$}
+     \irlabel{choicebr|$\dibox{\cup}$}
+     \irlabel{iteratedl|$\didia{*}$}
+     \irlabel{iteratedr|$\didia{*}$}
+     \irlabel{iteratebl|$\dibox{*}$}
+     \irlabel{iteratebr|$\dibox{*}$}
+     \irlabel{testdl|$\didia{?}$}
+     \irlabel{testdr|$\didia{?}$}
+     \irlabel{testbl|$\dibox{?}$}
+     \irlabel{testbr|$\dibox{?}$}
+     \irlabel{assigndl|$\didia{:=}$}
+     \irlabel{assigndr|$\didia{:=}$}
+     \irlabel{assignbl|$\dibox{:=}$}
+     \irlabel{assignbr|$\dibox{:=}$}
+     \irlabel{evolvedl|$\didia{'}$}
+     \irlabel{evolvedr|$\didia{'}$}
+     \irlabel{evolvebl|$\dibox{'}$}
+     \irlabel{evolvebr|$\dibox{'}$}
+     %
+     \irlabel{K|K}
+     \irlabel{I|I}
+     \irlabel{DW|DW}
+     \irlabel{diffweaken|DW}
+     \irlabel{DI|DI}
+     \irlabel{DE|DE}
+     \irlabel{DC|DC}
+     \irlabel{DG|DG}
+     \irlabel{DS|DS}
+     \irlabel{Dassignb|$\dibox{':=}$}
+     \irlabel{Dconst|$c'$}
+     \irlabel{Dvar|$x'$}
+     \irlabel{Dplus|$+'$}
+     \irlabel{Dtimes|$\cdot'$}
+     \irlabel{Dcompose|$\compose'$}
+     %
+     \irlabel{loop|loop}
+     \irlabel{M|M}
+     \irlabel{Mb|M${\dibox{\cdot}}$}
+     \irlabel{Mbr|M\rightrule}
+     \irlabel{Mbl|M\leftrule}
+     \irlabel{V|V}
+     \irlabel{B|B}
+     \irlabel{Kd|K${\langle}{\rangle}$}
+     \irlabel{G|G}
+     \irlabel{Gr|G}
+     \irlabel{CT|CT}
+     \irlabel{CQ|CQ}
+     \irlabel{CE|CE}
+     \irlabel{CTr|CT\rightrule}
+     \irlabel{CTl|CT\leftrule}
+     \irlabel{CQr|CQ\rightrule}
+     \irlabel{CQl|CQ\leftrule}
+     \irlabel{CEr|CE\rightrule}
+     \irlabel{CEl|CE\leftrule}
+     %\irlabel{genb|$\dibox{}gen$}
+     %\irlabel{gend|$\didia{}gen$}
+     \irlabel{invind|ind}
+     %\irlabel{invindgen|$ind'$} %[loop]
+     \irlabel{con|$con$}
+     \irlabel{congen|$con'$}
+     %
+     % quantifier rules
+     \irlabel{existsr|$\exists$\rightrule}
+     \irlabel{existsrinst|$\exists$\rightrule}
+     \irlabel{alll|$\forall$\leftrule}
+     \irlabel{alllinst|$\forall$\leftrule}
+     \irlabel{allr|$\forall$\rightrule}
+     \irlabel{existsl|$\exists$\leftrule}
+     \irlabel{iallr|i$\forall$}
+     \irlabel{iexistsr|i$\exists$}
+     % derived
+     \irlabel{ifb|$\dibox{\text{if}}$}
+     \irlabel{ifd|$\didia{\text{if}}$}
+     \irlabel{ifbl|$\dibox{\text{if}}$\leftrule}
+     \irlabel{ifbr|$\dibox{\text{if}}$\rightrule}
+     \irlabel{ifdl|$\didia{\text{if}}$\leftrule}
+     \irlabel{ifdr|$\didia{\text{if}}$\rightrule}
+%     \irlabel{genbcut|$\dibox{}gen'$}
+     % equality
+     \irlabel{applyeqr|=\rightrule}
+     \irlabel{applyeql|=\leftrule}
+     % differential invariants
+     \irlabel{dI|dI}
+     \irlabel{dC|dC}
+     \irlabel{diffind|dI}
+     \irlabel{diffcut|dC}
+     \irlabel{dW|dW}
+     %\irlabel{diffweak|dW}
+     \irlabel{difffin|dV}
+     % derived rules
+     \irlabel{band|${[]\land}$}
+}
+}
+
+%[irdynamicsequent] sequent calculus for just dynamics
+\DeclareOption{irdynamicsequent}{
+  \AtBeginDocument{
+     % sequent rule versions of dynamic rules
+     \irlabel{composedl|$\didia{{;}}$\leftrule}
+     \irlabel{composedr|$\didia{{;}}$\rightrule}
+     \irlabel{composebl|$\dibox{{;}}$\leftrule}
+     \irlabel{composebr|$\dibox{{;}}$\rightrule}
+     \irlabel{choicedl|$\didia{\cup}$\leftrule}
+     \irlabel{choicedr|$\didia{\cup}$\rightrule}
+     \irlabel{choicebl|$\dibox{\cup}$\leftrule}
+     \irlabel{choicebr|$\dibox{\cup}$\rightrule}
+     \irlabel{iteratedl|$\didia{*}$\leftrule}
+     \irlabel{iteratedr|$\didia{*}$\rightrule}
+     \irlabel{iteratebl|$\dibox{*}$\leftrule}
+     \irlabel{iteratebr|$\dibox{*}$\rightrule}
+     \irlabel{testdl|$\didia{?}$\leftrule}
+     \irlabel{testdr|$\didia{?}$\rightrule}
+     \irlabel{testbl|$\dibox{?}$\leftrule}
+     \irlabel{testbr|$\dibox{?}$\rightrule}
+     \irlabel{assigndl|$\didia{:=}$\leftrule}
+     \irlabel{assigndr|$\didia{:=}$\rightrule}
+     \irlabel{assignbl|$\dibox{:=}$\leftrule}
+     \irlabel{assignbr|$\dibox{:=}$\rightrule}
+     \irlabel{evolvedl|$\didia{'}$\leftrule}
+     \irlabel{evolvedr|$\didia{'}$\rightrule}
+     \irlabel{evolvebl|$\dibox{'}$\leftrule}
+     \irlabel{evolvebr|$\dibox{'}$\rightrule}
+}
+}
+
+\DeclareOption*{\PackageWarning{fcps}{Unknown option `\CurrentOption'}}
+\ProcessOptions\relax
+
+
+
+\RequirePackage{logic}
+\RequirePackage{progreg}
+\RequirePackage{dL}
+
+\definecolor{darkishgray}{rgb}{.35,.35,.35}
+\definecolor{vvblue}{rgb}{.14,.21,.868}%{1.4*vblue}
+%{.12,.18,.744}%{1.2*vblue}
+
+\ifcsname beamer@author\endcsname
+  \renewcommand*{\irrulename}[1]{\text{\textcolor{darkishgray}{#1}}}%
+\else
+  \renewcommand*{\irrulename}[1]{\text{\textcolor{darkishgray}{\upshape#1}}}%
+  \renewcommand{\axkey}[1]{\textcolor{vvblue}{#1}}
+\fi
+
+\renewcommand*{\irruleside}[1]{\textcolor{darkishgray}{#1}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\lecurl}{http://symbolaris.com/course/fcps17}
+
+
+\newcommand{\eexhere}{}
+
+\renewcommand{\mapply}[3][]{#2(#3)}
+
+\newcommand{\bebecomes}{\mathrel{::=}}
+\newcommand{\alternative}{~|~}
+
+%% left opening grouping bracket for programs
+\newcommand{\lpgroup}{(}%{\{}%{(}
+%% right closing grouping bracket for programs
+\newcommand{\rpgroup}{)}%{\}}%{)}
+
+%% left opening bracket/brace for programs
+\newcommand{\lpbrace}{\{}
+%% right closing bracket/brace for programs
+\newcommand{\rpbrace}{\}}
+
+
+%% canonical name for cycle time / reaction time
+\newcommand{\cyct}{\varepsilon}
+%% canonical name for intermediate point in time
+\newcommand{\intime}{z}
+
+% standard semantics naming
+
+\newcommand{\stdI}{\dLint[const=I,state=\omega]}
+\newcommand{\I}{\dLint[const=I,state=\omega]}
+\newcommand{\It}{\dLint[const=I,state=\nu]}
+\newcommand{\If}{\DALint[flow=\varphi]}
+\providecommand{\Iz}{\iconcat[state=\mu]{\stdI}}%
+\newcommand*{\Iff}[1][\zeta]{\dLint[state=\varphi(#1)]}%
+%\let\Ifz\Iff
+%% \Idot is the interpretation abstractly without reference to a state yet
+\newcommand{\Idot}{\dLint[state=]}
+
+\renewcommand{\linterpretationsname}{\mathcal{S}}
+
+\newcommand{\sol}{x}%
+% solution for \irref{evolveb} rule
+\newcommand{\solf}{y}%
+% time coordinate of solution
+\newcommand{\stime}{\sol_0}%
+\newcommand{\timebound}{t}%
+
+% update formula
+\newcommand{\jupdf}{\mathcal{J}}%
+\newcommand{\jupd}[1]{\ddiamond{\jupdf}{#1}}%
+\newcommand{\solutionf}{{y}}%
+\newcommand{\solutionfor}[2][]{\solutionf_{#1}}%
+\newcommand{\solutionupdate}[1]{\pumod{x}{\solutionf(#1)}}%
+
+\newcommand{\internal}[1]{}
+
+%NOTE Use round parentheses to avoid confusion with modality boxes
+\renewenvironment{eqsystem}
+{\left(\array{rl}}
+{\endarray\right)}
+
+
+  \linferenceRulevskipamount=0.9em%
+  %% horizontal column separation of \linferenceRules in a \begin{calculuscollection}
+  \newdimen\linferenceRulehskipamount%
+  \linferenceRulehskipamount=1mm%
+  %% vertical separation of \linferenceRules between \begin{calculuscollection}
+  \newdimen\lcalculuscollectionvskipamount%
+  \lcalculuscollectionvskipamount=0.1em%
+
+\renewcommand{\linferenceRuleNameSeparation}{\hspace{4pt}}
+
+%% true free variables, i.e. value can depend on
+\newcommand*{\freevarsdef}[1]{\mathop{\mathrel{\textsf{\upshape F}}\joinrel\mathrel{\textsf{\upshape V}}}(#1)}%{\mathop{\textsf{FV}}(#1)}%{\mathop{\text{F}\mathcal{V}}(#1)}%{\mathop{\textbf{FV}}(#1)}
+\let\freevarsdef\freevars
+%% true bound variables, i.e. value can change
+\newcommand*{\boundvarsdef}[1]{\mathop{\mathrel{\textsf{\upshape B}}\joinrel\mathrel{\textsf{\upshape V}}}(#1)}%{\mathop{\textsf{BV}}(#1)}%{\mathop{\text{B}\mathcal{V}}(#1)}%{\mathop{\textbf{BV}}(#1)}
+\let\boundvarsdef\boundvars
+
+
+\tikzstyle{models}=[red]%
+\tikzstyle{sem}=[blue]%
+\ifcsname beamer@author\endcsname
+%\tikzstyle{world}=[sem,circle,draw=blue!50,fill=blue!20]%
+\tikzstyle{world}=[circle,very thick,draw=blue!30,top color=white,bottom color=blue!20,circular drop shadow]
+\else
+\tikzstyle{world}=[circle,thick,draw=vblue,fill=vblue!15]
+\fi
+\tikzstyle{accessibility}=[sem]%
+\tikzstyle{hybrid}=[>=stealth',sem,->]%
+\tikzstyle{jump}=[hybrid]%
+\tikzstyle{flow}=[hybrid]%
+\tikzstyle{premise}=[]%
+\tikzstyle{conclusion}=[thick]%
+\tikzstyle{mode switch}=[dotted]
+
+%\providecommand{\stdI}{\dLint[const=\ell,state=\nu]}%
+%  \providecommand{\I}{\stdI}%
+%  \providecommand{\It}{\iconcat[state=\omega]{\stdI}}%
+
+\newcommand{\tutorialvideo}[2]{\resourcepointer*{#1}{#2}}
+
+% Quantum the little acrophobic bouncing ball
+\newcommand{\quantum}{Quantum\xspace}
+
+%\learninggoals{modeling and control\\goals}{computational thinking\\goals}{CPS skill\\goals}
+\newcommand*{\learninggoals}[3]
+{\begin{tikzpicture}
+    \coordinate (CT) at (90:1.5);
+    \coordinate (MC) at (210:1.5);
+    \coordinate (CPS) at (330:1.5);
+    \draw[fill=vblue!40] (CT) node[below=8pt,color=vblue] {CT} -- (MC) node[above right=2pt,color=vdarkgreen] {~M\&C} -- (CPS) node[above left=2pt,color=vred] {CPS~~} -- cycle;
+    \node[above of=CT,anchor=south,node distance=0pt,align=left,vblue] {#2};
+    \node[left of=MC,anchor=north east,node distance=0pt,align=left,vdarkgreen] {#1};
+    \node[right of=CPS,anchor=north west,node distance=0pt,align=left,vred] {#3};
+  \end{tikzpicture}%
+}
+
+\renewcommand{\usarg}{\boldsymbol{\cdot}}
+\renewcommand{\uscarg}{\boldsymbol{\_}}
+
+\newcommand*{\genDG}[3]{f(#1,#2,#3)}
+
+\renewcommand*{\irsequentdeductionformat}[1]{\text{\textcolor{gray}{#1}}}
+
+\providecommand*{\medit}[1]{\boldsymbol{#1}}
+\providecommand{\ignore}[1]{}
+
+\def\var{p}
+%% hybrid games
+% \inflop[n]{X} inflationary/extensive operator of order n for Knaster-Tarski fixpoint theorem.
+%\newcommand{\inflop}[2][]{\varsigma_\alpha^{#1}(#2)}
+
+\renewcommand*{\keywordfont}[1]{\textsf{\upshape #1}}
+
+%\requires{x>0} states a precondition requirement on a subsequent piece of code
+\newcommand*{\requires}[1]{\textsf{\bf\upshape requires}(#1)}%{\keywordfont{requires:}~#1}
+%\ensures{x>0} states a postcondition guarantee for a subsequent piece of code
+\newcommand*{\ensures}[1]{\textsf{\bf\upshape ensures}(#1)}%{\keywordfont{ensures:}~#1}
+
+\ifcsname beamer@author\endcsname
+%% \virtsubst[F]{x}{blabla} virtual substitution of blabla for x in F
+\newcommand{\virtsubst}[3][]{\subst[#1]{\textcolor{vred}{\mathsf{\bar{#2}}}}{#3}}%
+\else
+%% \virtsubst[F]{x}{blabla} virtual substitution of blabla for x in F
+\newcommand{\virtsubst}[3][]{\subst[#1]{\mathsf{\bar{#2}}}{#3}}%
+\fi
+
+%% \sqrtex{a}{b}{c}{d} is the square root expression (a+b\sqrt{c})/d
+\newcommand*{\sqrtex}[4]{(#1%
+  \ifthenelse{\equal{#2}{-1}}{-}{\ifthenelse{\equal{#2}{\pm1}}{\pm}{\ifthenelse{\equal{#2}{1}}{+}{+#2}}}%
+  \sqrt{#3})/#4}%
+
+\newcommand{\infinitesimal}{\varepsilon}%
+
+% ultimately positive at -\infty
+\newcommand*{\fpos}[1]{#1(-\infty)>0}%   %{@_{-\infty}(#1)>0}%
+% ultimately negative at -\infty
+\newcommand*{\fneg}[1]{#1(-\infty)<0}%   %{@_{-\infty}(#1)<0}%
+
+%% immediately positive either now or trending
+\newcommand*{\ipos}[1]{{#1}^+>0}% %{@_+(#1)}%
+%% immediately negative either now or trending
+\newcommand*{\ineg}[1]{{#1}^+<0}% %{@_-(#1)}%
+
+
+\tikzstyle{strategy preimage}=[draw=vblue,fill=vblue!20,shape=ellipse]
+\tikzstyle{winning condition}=[draw=vred,fill=vred!50,text=white,shape=circle]
+\tikzstyle{winning annotation}=[ultra thick,black,->]
+
+\providecommand{\lightning}{FLASH}

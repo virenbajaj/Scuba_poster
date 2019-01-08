@@ -1,0 +1,57 @@
+\ProvidesPackage{bellerophon}
+\NeedsTeXFormat{LaTeX2e}
+%%
+%% Copyright (c) Nathan Fulton 2015
+%%
+%% This package provides tools for writing programs in the Bellerophon proof
+%% search programming language for KeYmaera X. In includes:
+%%   * Definitions of base combinators and of common tactics in the tactic library.
+%%   * Definitions of evaluation relations for the language's formal semantics
+%%   * Definitions for disjunctive cost graphs (DCGs) (deprecated)
+
+\RequirePackage{xspace}
+\newcommand{\lang}{Bellerophon\xspace}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Base Combinators
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Style for tactic text.
+\newcommand{\tactic}[1]{\texttt{#1}}
+
+%% Basic combinators
+\newcommand{\seqTC}{\tactic{;}}
+\newcommand{\branchTC}{{<}}
+\newcommand{\eitherTC}{|}
+\newcommand{\repeatTC}[1]{#1^\ast}
+\newcommand{\ntimesTC}[2]{#1^{#2}}
+\newcommand{\usubstT}[1]{\tactic{case}~\tactic{of}} % Is there any reason this was textsf instead of tactic? #note: first arg is thrown away!!!
+\newcommand{\testTC}{?}
+\newcommand{\abbrvT}[3]{\tactic{abbrv}~#1=#2~\tactic{in}~#3}
+%Currently unimplemented but at some point included in implementation or in theory:
+%\newcommand{\ifT}[3]{\tactic{ifT}(#1)(#2, #3)}
+%\newcommand{\parTC}{\parallel}
+
+%% Abstract primitive (built-in) tactics
+\newcommand{\primitiveT}[1]{\tactic{#1}}
+% Is there any reason we need primitiveTactic when we can just say \primitiveT{$\beta$}?
+%\newcommand{\primitiveTactic}{\tactic{$\beta$}} % Is there any reason this was textsl instead of tactic?
+%\newcommand{\primitivePosTactic}{\tactic{$\rho$}} % Is there any reason this was textsl instead of tactic?
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Positions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\succPos}{\textsf{SuccPos}}
+\newcommand{\antePos}{\textsf{AntePos}}
+\newcommand{\posInExpr}{\textsf{PosInExpr}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Tactic Library
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\assignT}{\primitiveT{AssignT}}
+\newcommand{\diffSolveT}{\primitiveT{DiffSolveT}}
+\newcommand{\diffInvT}{\primitiveT{DiffInvT}}
+\newcommand{\choiceT}{\primitiveT{ChoiceT}}
+\newcommand{\testT}{\primitiveT{TestT}}
+\newcommand{\QET}{\primitiveT{QE}}
+\newcommand{\onLabelT}{\primitiveT{onLabel}}

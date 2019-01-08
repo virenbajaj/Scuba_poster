@@ -1,0 +1,15 @@
+\ProvidesPackage{nfplt}
+\NeedsTeXFormat{LaTeX2e}
+%%
+%% Copyright (c) Nathan Fulton 2015
+%% 
+%% This package provides tools for programming language theory
+
+\RequirePackage{bussproofs}
+\RequirePackage{mathpartir}
+
+\newcommand{\inferlbl}[3]                                                       
+      {\inferrule{#3}{#2}{\textsf{\footnotesize{\sc #1}}}}                      
+
+\newcommand{\inferline}[3]                                                      
+      {\inferrule{#3}{#2} & {\textsf{\footnotesize{\sc #1}}} \\ \\}             
